@@ -7,20 +7,20 @@ from . import LGTVScan, LGTVClient, getCommands
 
 def usage(error=None):
     if error:
-        print ("Error: " + error)
-    print ("LGTV Controller")
-    print ("Author: Karl Lattimer <karl@qdh.org.uk>")
-    print ("Usage: lgtv <command> [parameter]\n")
-    print ("Available Commands:")
+        print("Error: " + error)
+    print("LGTV Controller")
+    print("Author: Karl Lattimer <karl@qdh.org.uk>")
+    print("Usage: lgtv <command> [parameter]\n")
+    print("Available Commands:")
 
-    print ("  scan")
-    print ("  auth                  Hostname/IP    Authenticate and exit, creates initial config ~/.lgtv.json")
+    print("  scan")
+    print("  auth                  Hostname/IP    Authenticate and exit, creates initial config ~/.lgtv.json")
 
     for c in getCommands(LGTVClient):
-        print ("  " + c, end=" ")
-        print (" " * (20 - len(c)), end=" ")
+        print("  " + c, end=" ")
+        print(" " * (20 - len(c)), end=" ")
         args = getargspec(LGTVClient.__dict__[c])
-        print (' '.join(args.args[1:-1]))
+        print(' '.join(args.args[1:-1]))
 
 
 def parseargs(command, argv):
@@ -57,13 +57,13 @@ if __name__ == '__main__':
     elif sys.argv[1] == "scan":
         results = LGTVScan()
         if len(results) > 0:
-            print (json.dumps({
+            print(json.dumps({
                 "result": "ok",
                 "count": len(results),
                 "list": results
             }))
         else:
-            print (json.dumps({
+            print(json.dumps({
                 "result": "failed",
                 "count": len(results)
             }))
