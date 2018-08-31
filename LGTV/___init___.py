@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from ws4py.client.threadedclient import WebSocketClient
 from types import FunctionType
-from wakeonlan import wol
+from wakeonlan import send_magic_packet
 import json
 import socket
 import subprocess
@@ -100,20 +100,20 @@ def LGTVScan(first_only=False):
     addresses = []
     attempts = 4
     while attempts > 0:
-        sock.sendto(request, ('239.255.255.250', 1900))
+        sock.sendto(request.encode('UTF-8'), ('239.255.255.250', 1900))
         uuid = None
         model = None
         address = None
         data = {}
         try:
             response, address = sock.recvfrom(512)
-            for line in response.split('\n'):
+            for line in response.decode('UTF-8').split('\n'):
                 if line.startswith("USN"):
                     uuid = re.findall(r'uuid:(.*?):', line)[0]
                 if line.startswith("DLNADeviceName"):
                     (junk, data) = line.split(':')
                     data = data.strip()
-                    data = urllib.unquote(data)
+                    data = urllib.parse.unquote(data)
                     model = re.findall(r'\[LG\] webOS TV (.*)', data)[0]
                 data = {
                     'uuid': uuid,
@@ -121,11 +121,11 @@ def LGTVScan(first_only=False):
                     'address': address[0]
                 }
         except Exception as e:
-            print(e.message)
+            print(e)
             attempts -= 1
             continue
 
-        if re.search('LG', response):
+        if re.search(b'LG', response):
             if first_only:
                 sock.close()
                 return data
@@ -225,7 +225,7 @@ class LGTVClient(WebSocketClient):
 
     def exec_command(self, command, args):
         if command not in self.__class__.__dict__.keys():
-            usage("Invalid command")
+            raise ValueError("Invalid command")
         self.__waiting_command = {command: args}
 
     def __store_settings(self):
@@ -292,7 +292,7 @@ class LGTVClient(WebSocketClient):
     def on(self):
         if not self.__macAddress:
             print("Client must have been powered on and paired before power on works")
-        wol.send_magic_packet(self.__macAddress)
+        send_magic_packet(self.__macAddress)
 
     def off(self):
         self.__send_command("", "request", "ssap://system/turnOff")

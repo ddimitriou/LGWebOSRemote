@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 import json
 from inspect import getargspec
-from . import LGTVScan, LGTVClient, getCommands
+from LGTV.___init___ import LGTVScan, LGTVClient, getCommands
 
 
 def usage(error=None):
