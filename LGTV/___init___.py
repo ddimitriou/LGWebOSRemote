@@ -100,7 +100,7 @@ def LGTVScan(first_only=False):
     addresses = []
     attempts = 4
     while attempts > 0:
-        sock.sendto(request.encode('UTF-8'), ('239.255.255.250', 1900))
+        sock.sendto(request, ('239.255.255.250', 1900))
         uuid = None
         model = None
         address = None
