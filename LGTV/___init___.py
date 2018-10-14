@@ -8,7 +8,7 @@ import subprocess
 import re
 import os
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 
 hello_data = {
@@ -88,11 +88,11 @@ hello_data = {
 
 
 def LGTVScan(first_only=False):
-    request = 'M-SEARCH * HTTP/1.1\r\n' \
-              'HOST: 239.255.255.250:1900\r\n' \
-              'MAN: "ssdp:discover"\r\n' \
-              'MX: 2\r\n' \
-              'ST: urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n'
+    request = b'M-SEARCH * HTTP/1.1\r\n' \
+              b'HOST: 239.255.255.250:1900\r\n' \
+              b'MAN: "ssdp:discover"\r\n' \
+              b'MX: 2\r\n' \
+              b'ST: urn:schemas-upnp-org:device:MediaRenderer:1\r\n\r\n'
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.settimeout(1)
@@ -141,7 +141,11 @@ def LGTVScan(first_only=False):
     if len(addresses) == 0:
         return []
 
-    return list(set(addresses))
+    unique = set()
+    for d in addresses:
+        t = tuple(d.items())
+        unique.add(t)
+    return [dict(x) for x in unique]
 
 
 def resolveHost(hostname):
@@ -151,6 +155,8 @@ def resolveHost(hostname):
 def getMacAddress(address):
     pid = subprocess.Popen(["arp", "-n", address], stdout=subprocess.PIPE)
     s = pid.communicate()[0]
+    s = s.decode("UTF-8")
+    print(s)
     matches = re.search(r"(([a-f\d]{1,2}\:){5}[a-f\d]{1,2})", s)
     if not matches:
         return None
@@ -161,7 +167,7 @@ def getMacAddress(address):
 
 
 def methods(cls):
-    return [x for x, y in cls.__dict__.items() if type(y) == FunctionType]
+    return [x for x, y in list(cls.__dict__.items()) if type(y) == FunctionType]
 
 
 def getCommands(cls):
@@ -205,6 +211,7 @@ class LGTVClient(WebSocketClient):
             if hostname is not None:
                 self.__clientKey = None
                 self.__ip = resolveHost(hostname)
+                print (self.__ip)
                 self.__macAddress = getMacAddress(self.__ip)
                 self.__store_settings()
             else:
@@ -216,10 +223,10 @@ class LGTVClient(WebSocketClient):
     def __exec_command(self):
         if self.__handshake_done is False:
             print("Error: Handshake failed")
-        if self.__waiting_command is None or len(self.__waiting_command.keys()) == 0:
+        if self.__waiting_command is None or len(list(self.__waiting_command.keys())) == 0:
             self.close()
             return
-        command = self.__waiting_command.keys()[0]
+        command = list(self.__waiting_command.keys())[0]
         args = self.__waiting_command[command]
         self.__class__.__dict__[command](self, **args)
 
@@ -251,7 +258,7 @@ class LGTVClient(WebSocketClient):
         print(json.dumps({
             "closing": {
                 "code": code,
-                "reason": reason
+                "reason": reason.decode("UTF-8")
             }
         }))
 
@@ -277,13 +284,13 @@ class LGTVClient(WebSocketClient):
             self.__waiting_callback = self.__set_client_key
 
     def __handshake(self, response):
-        if 'client-key' in response['payload'].keys():
+        if 'client-key' in list(response['payload'].keys()):
             self.__handshake_done = True
             self.__exec_command()
 
     def __set_client_key(self, response):
         # {"type":"registered","id":"register_0","payload":{"client-key":"a40635497f685492b8366e208808a86b"}}
-        if 'client-key' in response['payload'].keys():
+        if 'client-key' in list(response['payload'].keys()):
             self.__clientKey = response['payload']['client-key']
             self.__waiting_callback = None
             self.__store_settings()

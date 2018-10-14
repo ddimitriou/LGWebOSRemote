@@ -1,4 +1,11 @@
 from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from __future__ import absolute_import
+from builtins import int
+from builtins import str
+from future import standard_library
+standard_library.install_aliases()
 import sys
 import json
 from inspect import getargspec
@@ -82,7 +89,7 @@ if __name__ == '__main__':
             try:
                 args = parseargs(sys.argv[1], sys.argv[2:])
             except Exception as e:
-                usage(e.message)
+                usage(str(e))
             ws.connect()
             ws.exec_command(sys.argv[1], args)
             ws.run_forever()
